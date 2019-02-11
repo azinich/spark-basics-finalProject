@@ -1,12 +1,14 @@
 package com.gridynamics.azinich.finalProject
 
+import java.math
 import java.nio.file.Paths
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Row, SparkSession}
 import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FunSuite, TestData}
+import org.apache.spark.sql.functions._
 
 @RunWith(classOf[JUnitRunner])
 class KeeperTest extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll {
@@ -61,38 +63,45 @@ class KeeperTest extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
 
   test("testGetAvg") {
     val keeper = new Keeper(inputWarehouse, inputAmounts)
+    val rightAmount = math.BigDecimal.valueOf(9.0)
 
-    val amounts = keeper.getAmounts(ss)
+    val amounts = keeper.getCurrentAmounts(keeper.getAmounts(ss))
     val warehouses = keeper.getWarehouses(ss)
 
     val avgs = keeper.getAvg(warehouses, amounts)
-    val count = avgs.count()
+      .filter(col("warehouse").===("W-1") && col("product").===("P-1")).collect().head
+    val amount = avgs.get(2).asInstanceOf[math.BigDecimal]
 
-    assert(count === 4)
+    assert(amount.compareTo(rightAmount) == 0)
   }
 
   test("testGetMin") {
-    val keeper = new Keeper(inputWarehouse, inputAmounts)
 
-    val amounts = keeper.getAmounts(ss)
+    val keeper = new Keeper(inputWarehouse, inputAmounts)
+    val rightAmount = math.BigDecimal.valueOf(8.0)
+
+    val amounts = keeper.getCurrentAmounts(keeper.getAmounts(ss))
     val warehouses = keeper.getWarehouses(ss)
 
-    val mins = keeper.getMin(warehouses, amounts)
-    val count = mins.count()
+    val min: Row = keeper.getMin(warehouses, amounts)
+      .filter(col("warehouse").===("W-1") && col("product").===("P-1")).collect().head
+    val amount = min.get(2).asInstanceOf[math.BigDecimal]
 
-    assert(count === 4)
+    assert(amount.compareTo(rightAmount) == 0)
   }
 
   test("testGetMax") {
     val keeper = new Keeper(inputWarehouse, inputAmounts)
+    val rightAmount = math.BigDecimal.valueOf(10.0)
 
-    val amounts = keeper.getAmounts(ss)
+    val amounts = keeper.getCurrentAmounts(keeper.getAmounts(ss))
     val warehouses = keeper.getWarehouses(ss)
 
     val maxs = keeper.getMax(warehouses, amounts)
-    val count = maxs.count()
+      .filter(col("warehouse").===("W-1") && col("product").===("P-1")).collect().head
+    val amount = maxs.get(2).asInstanceOf[math.BigDecimal]
 
-    assert(count === 4)
+    assert(amount.compareTo(rightAmount) == 0)
 
   }
 
